@@ -30,7 +30,7 @@ void update_env(t_env **env, char *variable, char *value)
 
 void export_with_args(t_env **env, int ac, char **av)
 {
-	int i = 2;
+	int i = 1;
 	char *variable;
     char *value;
     
