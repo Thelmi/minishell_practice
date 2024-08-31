@@ -25,78 +25,66 @@ int getcmd(char *buf, int nbuf)
   return 0;
 }
 
-struct cmd* parsecmd(char *s)
-{
-  char *es;
-  struct cmd *cmd;
-
-  es = s + strlen(s);
-  cmd = parseline(&s, es);
-  peek(&s, es, "");
-  if(s != es){
-    printf(2, "leftovers: %s\n", s);
-    panic("syntax");
-  }
-  nulterminate(cmd);
-  return cmd;
-}
-
 void runcmd(struct cmd *cmd)
 {
-  int p[2];
-  
-	struct execcmd *ecmd;
-	struct pipecmd *pcmd;
-	struct redircmd *rcmd;
+    int p[2];
+    struct execcmd *ecmd;
+    struct pipecmd *pcmd;
+    struct redircmd *rcmd;
 
-  if (cmd == NULL)
-    exit(1);
-  else if (cmd->type == EXEC) 
-  {
-    ecmd = (struct execcmd*)cmd;
-    if (ecmd->argv[0] == NULL)
-      exit(1);
-    exec(ecmd->argv[0], ecmd->argv);
-    printf(2, "exec %s failed\n", ecmd->argv[0]);
-  } 
-else if (cmd->type == REDIR)
-{
-    rcmd = (struct redircmd*)cmd;
-    // close(rcmd->fd);
-    if (open(rcmd->file, rcmd->mode) < 0) {
-      printf(2, "open %s failed\n", rcmd->file);
-      exit(1);
-    }
-    runcmd(rcmd->cmd);
-}
-  else if (cmd->type == PIPE) 
-  {
-    pcmd = (struct pipecmd*)cmd;
-    if (pipe(p) < 0)
-      panic("pipe");
-    if (fork1() == 0) 
+    if (cmd == NULL)
+        exit(1);
+    if (cmd->type == EXEC) 
     {
-    //   close(1);
-      close(p[0]);
-    //   dup(p[1]);
-      dup2(p[1], STDOUT_FILENO);
-    //   close(p[0]);
-      close(p[1]);
-      runcmd(pcmd->left);
-    }
-    if (fork1() == 0) 
+        ecmd = (struct execcmd*)cmd;
+        if (ecmd->argv[0] == NULL)
+            exit(1);
+        exec(ecmd->argv[0], ecmd->argv);
+        perror("exec failed");
+        exit(1);
+    } 
+    else if (cmd->type == REDIR) 
     {
-      close(p[1]);
-    //   close(0);
-      dup2(p[0], STDIN_FILENO);
-      close(p[0]);
-      runcmd(pcmd->right);
+        rcmd = (struct redircmd*)cmd;
+        int fd = open(rcmd->file, rcmd->mode);
+        if (fd < 0) {
+            perror("open failed");
+            exit(1);
+        }
+        if (dup2(fd, rcmd->fd) < 0) {
+            perror("dup2 failed");
+            exit(1);
+        }
+        close(fd);
+        runcmd(rcmd->cmd);
+    } 
+    else if (cmd->type == PIPE) 
+    {
+        pcmd = (struct pipecmd*)cmd;
+        if (pipe(p) < 0)
+            panic("pipe failed");
+
+        if (fork1() == 0) 
+        {
+            close(p[0]);
+            if (dup2(p[1], STDOUT_FILENO) < 0)
+                panic("dup2 failed");
+            close(p[1]);
+            runcmd(pcmd->left);
+        }
+        if (fork1() == 0) 
+        {
+            close(p[1]);
+            if (dup2(p[0], STDIN_FILENO) < 0)
+                panic("dup2 failed");
+            close(p[0]);
+            runcmd(pcmd->right);
+        }
+        close(p[0]);
+        close(p[1]);
+        wait(NULL);
+        wait(NULL);
     }
-    close(p[0]);
-    close(p[1]);
-    wait(NULL);
-    wait(NULL);
-  } 
-  exit(0);
+    exit(0);
 }
 
