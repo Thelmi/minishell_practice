@@ -52,7 +52,7 @@ typedef struct pipecmd  // Pipe command structure
 } t_pipecmd;
 
 // Main
-void runcmd(struct cmd *cmd); // Run a command
+void runcmd(struct cmd *cmd, char **envir); // Run a command
 int getcmd(char *buf, int nbuf); // Get a command from input
 int fork1(); // Fork a process
 void panic(char *s); // Print an error message and exit
@@ -69,4 +69,4 @@ struct cmd* nulterminate(struct cmd *cmd);
 struct cmd* execcmd(void); // Create an execution command
 struct cmd* redircmd(struct cmd *subcmd, char *file, char *efile, int mode, int fd); // Create a redirection command
 
-#endif // MINISHELL_H
+#endif

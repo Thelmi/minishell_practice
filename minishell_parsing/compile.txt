@@ -1,0 +1,1 @@
+cc  main.c main_helper.c parscecmd.c struct_func.c minishell.h -lreadline
