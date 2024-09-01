@@ -1,7 +1,7 @@
 
 #include "minishell.h"
 
-int gettoken(char **ps, char *es, char **q, char **eq)
+int gettoken(char **ps, char *es, char **q, char **eq) // add herdoc
 {
     char *s;
     int ret;
@@ -56,7 +56,7 @@ int peek(char **ps, char *es, char *toks)
   return (*s && strchr(toks, *s));
 }
 
-struct cmd* parseredirs(struct cmd *cmd, char **ps, char *es)
+struct cmd* parseredirs(struct cmd *cmd, char **ps, char *es) // add herdoc, and struct
 {
   int tok;
   char *q, *eq;
@@ -89,7 +89,7 @@ struct cmd* parseexec(char **ps, char *es)
   cmd = (struct execcmd*)ret;
 
   argc = 0;
-  ret = parseredirs(ret, ps, es);
+  ret = parseredirs(ret, ps, es); 
   while(!peek(ps, es, "|")){
     if((tok=gettoken(ps, es, &q, &eq)) == 0)
       break;
@@ -98,7 +98,7 @@ struct cmd* parseexec(char **ps, char *es)
     cmd->argv[argc] = q;
     cmd->eargv[argc] = eq;
     argc++;
-    if(argc >= MAXARGS)
+    if(argc >= MAXARGS)  // do we really need this
       panic("too many args");
     ret = parseredirs(ret, ps, es);
   }
@@ -119,16 +119,48 @@ struct cmd* parsepipe(char **ps, char *es)
   return cmd;
 }
 
+struct cmd* nulterminate(struct cmd *cmd)
+{
+  int i;
+  struct backcmd *bcmd;
+  struct execcmd *ecmd;
+  struct listcmd *lcmd;
+  struct pipecmd *pcmd;
+  struct redircmd *rcmd;
+
+  if (cmd == 0)
+    return 0;
+  if (cmd->type == EXEC) {
+    ecmd = (struct execcmd*)cmd;
+    i = 0;
+    while (ecmd->argv[i]) {
+      *ecmd->eargv[i] = 0;
+      i++;
+    }
+  }
+  else if (cmd->type == REDIR) {
+    rcmd = (struct redircmd*)cmd;
+    nulterminate(rcmd->cmd);
+    *rcmd->efile = 0;
+  }
+  else if (cmd->type == PIPE) {
+    pcmd = (struct pipecmd*)cmd;
+    nulterminate(pcmd->left);
+    nulterminate(pcmd->right);
+  }
+  return cmd;
+}
+
 struct cmd* parsecmd(char *s)
 {
   char *es;
   struct cmd *cmd;
 
   es = s + strlen(s);
-  cmd = parsepipe(s, es);
+  cmd = parsepipe(&s, es);
   peek(&s, es, "");
   if(s != es){
-    printf(2, "leftovers: %s\n", s);
+    printf("leftovers: %s\n", s);
     panic("syntax");
   }
   nulterminate(cmd);

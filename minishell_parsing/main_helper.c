@@ -2,7 +2,7 @@
 
 void panic(char *s)
 {
-  printf(2, "%s\n", s);
+  printf("%s\n", s);
   exit(1);
 }
 int fork1(void)
@@ -15,9 +15,29 @@ int fork1(void)
   return pid;
 }
 
-int getcmd(char *buf, int nbuf)
+char *gets(char *buf, int max)
 {
-  printf(2, "$ ");
+    int i = 0;
+    int cc;
+    char c;
+
+    while (i + 1 < max) {
+        cc = read(0, &c, 1);
+        if (cc < 1) {
+            break;
+        }
+        buf[i++] = c;
+        if (c == '\n' || c == '\r') {
+            break;
+        }
+    }
+    buf[i] = '\0';
+    return buf;
+}
+
+int getcmd(char *buf, int nbuf) 
+{
+  printf("$ ");
   memset(buf, 0, nbuf);
   gets(buf, nbuf);
   if(buf[0] == 0) // EOF
@@ -30,7 +50,7 @@ void runcmd(struct cmd *cmd)
     int p[2];
     struct execcmd *ecmd;
     struct pipecmd *pcmd;
-    struct redircmd *rcmd;
+    struct redircmd *rcmd; // we might add for herdoc, it depends
 
     if (cmd == NULL)
         exit(1);
@@ -82,7 +102,7 @@ void runcmd(struct cmd *cmd)
         }
         close(p[0]);
         close(p[1]);
-        wait(NULL);
+        wait(NULL); // wait should be after fork
         wait(NULL);
     }
     exit(0);
