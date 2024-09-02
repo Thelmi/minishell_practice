@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   main.c                                             :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: thelmy <thelmy@student.42.fr>              +#+  +:+       +#+        */
+/*   By: mrhelmy <mrhelmy@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/14 14:58:22 by krazikho          #+#    #+#             */
-/*   Updated: 2024/08/27 09:52:10 by thelmy           ###   ########.fr       */
+/*   Updated: 2024/09/02 20:08:06 by mrhelmy          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,7 +28,7 @@ int main(int ac, char **av, char **ev){
         }
         if (*command) {
             add_history(command);
-            envir = execute_command(command, envir, &last_exit_status);
+            envir = execute_command(command, envir, &last_exit_status, ev);
         }
         free(command);
     }

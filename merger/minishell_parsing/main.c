@@ -60,9 +60,9 @@ char cwd[1024];
 	      continue;
 	    }
 		// parsecmd(buf);
-		// print_tree(parsecmd(buf));
-	    if (fork1() == 0)
-	      runcmd(parsecmd(buf), ev);
+		print_tree(parsecmd(buf));
+	    // if (fork1() == 0)
+	    //   runcmd(parsecmd(buf), ev);
 	    wait(NULL);
 	    free(buf);
     }

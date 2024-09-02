@@ -1,0 +1,6 @@
+exit status should be modified/updated everywhere *
+env should be modified and updated everywhere
+signals should be tested in parent/child processes e.g. using cat alone *
+make grep accept input with quotes. similar to the original bash *
+add heardoc logic to the tree & execution 
+ask for input from the user when not having an argument for the right side of the pipe *

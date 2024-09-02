@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   minishell.h                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: krazikho <krazikho@student.42.fr>          +#+  +:+       +#+        */
+/*   By: mrhelmy <mrhelmy@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/14 14:58:51 by krazikho          #+#    #+#             */
-/*   Updated: 2024/08/29 14:53:40 by krazikho         ###   ########.fr       */
+/*   Updated: 2024/09/02 21:20:26 by mrhelmy          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,6 +20,12 @@
 #include <stdbool.h> //bool
 #include <string.h> // remove it when we will use libft
 #include <ctype.h> // remove it when we will use libft
+#include <fcntl.h>
+#include <string.h>
+#include <time.h>
+#include <sys/wait.h>
+#include <limits.h>
+
 // Our environment struct
 typedef struct env
 {
@@ -82,8 +88,69 @@ void update_env_for_cd(t_env **env, char *variable, char *value);
 bool is_only_n(const char *str);
 
 //execution
-t_env *execute_command(char *command, t_env *envir, int *exit_status);
+t_env *execute_command(char *command, t_env *envir, int *last_exit_status, char** ev);
 t_env *execute_builtin(t_env *envir, char **args, int *last_exit_status);
 void modify_args(char **args, t_env *envir);
+
+bool is_builtin(char *command);
+
+//////parse & execute
+
+# define EXEC 1
+# define BUILTIN 2
+# define REDIR 3
+# define PIPE 4
+
+#define MAXARGS 10
+
+typedef struct cmd  // Base command structure
+{
+  int type; // Type of command (EXEC, BUILTIN, REDIR, PIPE)
+} cmd;
+
+typedef struct execcmd  // Execution command structure
+{
+  int type; // Type should be EXEC
+  char *argv[MAXARGS]; // Argument vector (command, flags, args)
+  char *eargv[MAXARGS]; // End pointers for each argument
+} t_execcmd;
+
+typedef struct redircmd  // Redirection command structure
+{
+  int type; // Type should be REDIR
+  struct cmd *cmd; // Command to be executed before redirection
+  char *file; // File to which output/input is redirected
+  char *efile; // End pointer for the file name
+  int mode; // File open mode (O_WRONLY | O_CREAT)
+  int fd; // File descriptor for redirection (0 = stdin, 1 = stdout)
+} t_redircmd;
+
+typedef struct pipecmd  // Pipe command structure
+{
+  int type; // Type should be PIPE
+  struct cmd *left; // Command on the left side of the pipe
+  struct cmd *right; // Command on the right side of the pipe
+} t_pipecmd;
+
+// Main
+void runcmd(struct cmd *cmd, char **ev, t_env *envir); // Run a command
+int getcmd(char *buf, int nbuf); // Get a command from input
+int fork1(); // Fork a process
+void panic(char *s); // Print an error message and exit
+
+// Parsing
+struct cmd* parsecmd(char *s); // Parse a command string
+struct cmd* parsepipe(char **ps, char *es); // Parse pipe commands
+struct cmd* parseexec(char **ps, char *es); // Parse execution commands
+struct cmd* parseredirs(struct cmd *cmd, char **ps, char *es); // Parse redirections
+int gettoken(char **ps, char *es, char **q, char **eq); // Tokenize input
+struct cmd* pipecmd(struct cmd *left, struct cmd *right); // Create a pipe command
+struct cmd* nulterminate(struct cmd *cmd);
+// Tree
+struct cmd* execcmd(void); // Create an execution command
+struct cmd* redircmd(struct cmd *subcmd, char *file, char *efile, int mode, int fd); // Create a redirection command
+
+
+
 
 #endif
