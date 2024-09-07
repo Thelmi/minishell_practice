@@ -6,7 +6,7 @@
 /*   By: mrhelmy <mrhelmy@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/14 14:58:51 by krazikho          #+#    #+#             */
-/*   Updated: 2024/09/02 21:20:26 by mrhelmy          ###   ########.fr       */
+/*   Updated: 2024/09/07 18:54:21 by mrhelmy          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -100,6 +100,7 @@ bool is_builtin(char *command);
 # define BUILTIN 2
 # define REDIR 3
 # define PIPE 4
+# define HEREDOC 5
 
 #define MAXARGS 10
 
@@ -114,6 +115,14 @@ typedef struct execcmd  // Execution command structure
   char *argv[MAXARGS]; // Argument vector (command, flags, args)
   char *eargv[MAXARGS]; // End pointers for each argument
 } t_execcmd;
+
+typedef struct heredoc  // Execution command structure
+{
+  int type; // Type should be HEREDOC
+  char *argv; // Argument vector (command, flags, args)
+  char *eargv; // End pointers for each argument
+  void *next;
+} t_heredoc;
 
 typedef struct redircmd  // Redirection command structure
 {
@@ -139,17 +148,19 @@ int fork1(); // Fork a process
 void panic(char *s); // Print an error message and exit
 
 // Parsing
+
 struct cmd* parsecmd(char *s); // Parse a command string
-struct cmd* parsepipe(char **ps, char *es); // Parse pipe commands
-struct cmd* parseexec(char **ps, char *es); // Parse execution commands
-struct cmd* parseredirs(struct cmd *cmd, char **ps, char *es); // Parse redirections
+struct cmd* parsepipe(char **ps, char *es, struct heredoc **heredoc); // Parse pipe commands
+struct cmd* parseexec(char **ps, char *es, struct heredoc **heredoc); // Parse execution commands
+ // Parse redirections
+struct cmd* parseredirs(struct cmd *cmd, char **ps, char *es, struct heredoc **heredoc);  // Parse redirections
 int gettoken(char **ps, char *es, char **q, char **eq); // Tokenize input
 struct cmd* pipecmd(struct cmd *left, struct cmd *right); // Create a pipe command
 struct cmd* nulterminate(struct cmd *cmd);
 // Tree
 struct cmd* execcmd(void); // Create an execution command
 struct cmd* redircmd(struct cmd *subcmd, char *file, char *efile, int mode, int fd); // Create a redirection command
-
+void redircmd_h(char *argv, char *eargv, struct heredoc **heredoc);
 
 
 

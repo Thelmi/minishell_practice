@@ -6,7 +6,7 @@
 /*   By: mrhelmy <mrhelmy@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/19 14:27:04 by krazikho          #+#    #+#             */
-/*   Updated: 2024/09/02 21:00:38 by mrhelmy          ###   ########.fr       */
+/*   Updated: 2024/09/07 19:45:52 by mrhelmy          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -36,13 +36,17 @@ t_env *execute_command(char *command, t_env *envir, int *last_exit_status, char*
     // args = ft_split(command, ' '); // just for testing later we can parse better (temporary)
     // if (!args || !args[0])
     //     return envir;
+    // int fd[2];
+    // (void)fd;
     if (fork1() == 0)
-	    runcmd(parsecmd(command), ev, envir); //we might need to exit when it is a built in, to stop the child process
-	wait(NULL);
+    {
+        runcmd(parsecmd(command), ev, envir); //we might need to exit when it is a built in, to stop the child process
+    }
+    wait(NULL);
 
     (void)last_exit_status;
     (void)is_builtin; // YOU CAN VOID FUNCTIONS YAAY
-    (void)is_executable;
+    (void)is_executable;;
 
     // modify_args(args, envir);
     // if (is_builtin(args[0])==true)

@@ -3,17 +3,9 @@
 
 struct cmd* print_tree(struct cmd *cmd)
 {
-  // int i;
-  // struct backcmd *bcmd;
   struct execcmd *ecmd;
-  // struct listcmd *lcmd;
   struct pipecmd *pcmd;
   struct redircmd *rcmd;
-
-// # define EXEC 1
-// # define BUILTIN 2
-// # define REDIR 3
-// # define PIPE 4
 
   if (cmd == 0)
     return 0;
@@ -89,126 +81,6 @@ int getcmd(char *buf, int nbuf)
     return -1;
   return 0;
 }
-
-
-
-// size_t	ft_strlen(const char *s)
-// {
-// 	size_t			i;
-
-// 	i = 0;
-// 	while (s[i])
-// 		i++;
-// 	return (i);
-// }
-
-// size_t	ft_strlcpy(char *dst, const char *src, size_t size)
-// {
-// 	size_t	i;
-
-// 	i = 0;
-// 	if (!dst || !src)
-// 		return (0);
-// 	if (size > 0)
-// 	{
-// 		while (src[i] && --size)
-// 		{
-// 			dst[i] = src[i];
-// 			i++;
-// 		}
-// 		dst[i] = '\0';
-// 	}
-// 	while (src[i])
-// 		i++;
-// 	return (i);
-// }
-
-// static char	**ft_malloc_error(char **tab)
-// {
-// 	size_t	i;
-
-// 	i = 0;
-// 	while (tab[i])
-// 	{
-// 		free(tab[i]);
-// 		i++;
-// 	}
-// 	free(tab);
-// 	return (NULL);
-// }
-
-// static size_t	ft_nb_words(char const *s, char c)
-// {
-// 	size_t	i;
-// 	size_t	nb_words;
-
-// 	if (!s[0])
-// 		return (0);
-// 	i = 0;
-// 	nb_words = 0;
-// 	while (s[i] && s[i] == c)
-// 		i++;
-// 	while (s[i])
-// 	{
-// 		if (s[i] == c)
-// 		{
-// 			nb_words++;
-// 			while (s[i] && s[i] == c)
-// 				i++;
-// 			continue ;
-// 		}
-// 		i++;
-// 	}
-// 	if (s[i - 1] != c)
-// 		nb_words++;
-// 	return (nb_words);
-// }
-
-// static void	ft_get_next_word(char **next_word, size_t *next_word_len, char c)
-// {
-// 	size_t	i;
-
-// 	*next_word += *next_word_len;
-// 	*next_word_len = 0;
-// 	i = 0;
-// 	while (**next_word && **next_word == c)
-// 		(*next_word)++;
-// 	while ((*next_word)[i])
-// 	{
-// 		if ((*next_word)[i] == c)
-// 			return ;
-// 		(*next_word_len)++;
-// 		i++;
-// 	}
-// }
-
-// char	**ft_split(char const *s, char c)
-// {
-// 	char	**tab;
-// 	char	*next_word;
-// 	size_t	next_word_len;
-// 	size_t	i;
-
-// 	if (!s)
-// 		return (NULL);
-// 	tab = (char **)malloc(sizeof(char *) * (ft_nb_words(s, c) + 1));
-// 	if (!tab)
-// 		return (NULL);
-// 	i = 0;
-// 	next_word = (char *)s;
-// 	next_word_len = 0;
-// 	while (i < ft_nb_words(s, c))
-// 	{
-// 		ft_get_next_word(&next_word, &next_word_len, c);
-// 		tab[i] = (char *)malloc(sizeof(char) * (next_word_len + 1));
-// 		if (!tab[i])
-// 			return (ft_malloc_error(tab));
-// 		ft_strlcpy(tab[i], next_word, next_word_len + 1);
-// 		i++;
-// 	}
-// 	tab[i] = NULL;
-// 	return (tab);
-// }
 
 char	*ft_strjoin(char const *s1, char const *s2)
 {
@@ -472,7 +344,7 @@ int peek(char **ps, char *es, char *toks)
   return (*s && strchr(toks, *s));
 }
 
-struct cmd* parseredirs(struct cmd *cmd, char **ps, char *es) // add herdoc, and struct
+struct cmd* parseredirs(struct cmd *cmd, char **ps, char *es, struct heredoc **heredoc) // add herdoc, and struct
 {
   int tok;
   char *q, *eq;
@@ -489,12 +361,16 @@ struct cmd* parseredirs(struct cmd *cmd, char **ps, char *es) // add herdoc, and
       cmd = redircmd(cmd, q, eq, O_WRONLY | O_CREAT, 1);
     } else if(tok == '+') {  // >>
       cmd = redircmd(cmd, q, eq, O_WRONLY | O_CREAT | O_APPEND, 1);
+    } else if(tok == 'h') {  // <<
+        // printf("HELLOOO\n");
+        redircmd_h(q, eq, heredoc);
+      // cmd = redircmd(cmd, q, eq, O_WRONLY | O_CREAT | O_APPEND, 1);
     }
   }
   return cmd;
 }
 
-struct cmd* parseexec(char **ps, char *es)
+struct cmd* parseexec(char **ps, char *es, struct heredoc **heredoc)
 {
   char *q, *eq;
   int tok, argc;
@@ -505,7 +381,7 @@ struct cmd* parseexec(char **ps, char *es)
   cmd = (struct execcmd*)ret;
 
   argc = 0;
-  ret = parseredirs(ret, ps, es); 
+  ret = parseredirs(ret, ps, es, heredoc); 
   while(!peek(ps, es, "|")){
     if((tok=gettoken(ps, es, &q, &eq)) == 0)
       break;
@@ -516,21 +392,21 @@ struct cmd* parseexec(char **ps, char *es)
     argc++;
     if(argc >= MAXARGS)  // do we really need this
       panic("too many args");
-    ret = parseredirs(ret, ps, es);
+    ret = parseredirs(ret, ps, es, heredoc);
   }
   cmd->argv[argc] = 0;
   cmd->eargv[argc] = 0;
   return ret;
 }
 
-struct cmd* parsepipe(char **ps, char *es)
+struct cmd* parsepipe(char **ps, char *es, struct heredoc **heredoc)
 {
   struct cmd *cmd;
 
-  cmd = parseexec(ps, es);
+  cmd = parseexec(ps, es, heredoc);
   if(peek(ps, es, "|")){
     gettoken(ps, es, 0, 0);
-    cmd = pipecmd(cmd, parsepipe(ps, es));
+    cmd = pipecmd(cmd, parsepipe(ps, es, heredoc));
   }
   return cmd;
 }
@@ -566,20 +442,61 @@ struct cmd* nulterminate(struct cmd *cmd)
   }
   return cmd;
 }
+static size_t t_strlen(const char *s)
+{
+	size_t i = 0;
+	while (s[i] != '\0')
+		i++;
+	return (i);
+}
 
 struct cmd* parsecmd(char *s)
 {
   char *es;
   struct cmd *cmd;
+  struct heredoc *heredoc;
 
+  heredoc = NULL;
   es = s + strlen(s);
-  cmd = parsepipe(&s, es);
+  cmd = parsepipe(&s, es, &heredoc);
   peek(&s, es, "");
   if(s != es){
     printf("leftovers: %s\n", s);
     panic("syntax");
   }
   nulterminate(cmd);
+  struct heredoc *tmp;
+  tmp = heredoc;
+    // printf("XXX\n");
+  
+  char *read = NULL;
+  char *tmp2 = NULL;
+  int i = 0;
+  while (tmp)
+  {
+    // write(1, "xcv\n", 4);
+    while (tmp->argv[i])
+    {
+      i++;
+      if (tmp->argv[i] == ' ')
+        break ;
+    }
+    tmp2 = ft_substr(tmp->argv, 0, i);
+    read = readline("> ");
+    while (t_strlen(read) > 0 && num_strncmp(read, tmp2) != 0)
+    {
+      read = readline("> ");
+      if (!read) // double check this logic
+          break;
+      if (t_strlen(read) > 0 && num_strncmp(read, tmp2) == 0)
+      {
+        free(read);  // Free the input string
+        break;
+      }
+    }
+    // printf("%s|\n", tmp2);
+    tmp = tmp->next;
+  }
   return cmd;
 }
 
@@ -609,6 +526,33 @@ struct cmd* redircmd(struct cmd *subcmd, char *file, char *efile, int mode, int 
   cmd->mode = mode;
   cmd->fd = fd;
   return (struct cmd*)cmd;
+}
+
+void redircmd_h(char *argv, char *eargv, struct heredoc **heredoc)
+{
+  struct heredoc *cmd;
+
+  cmd = malloc(sizeof(*cmd));
+  memset(cmd, 0, sizeof(*cmd));
+  cmd->type = HEREDOC;
+  cmd->argv = argv;
+  cmd->eargv = eargv;
+  cmd->next = NULL;
+
+// printf("%s|\n", argv);
+  if (*heredoc == NULL)
+  {
+    // create a node, new head
+    *heredoc = cmd;
+  }
+  else
+  {
+    // add to the linked list
+    struct heredoc *tmp = *heredoc;
+    while (tmp->next)
+		tmp = tmp->next;
+	tmp->next = cmd;
+  }
 }
 
 struct cmd* execcmd(void)
