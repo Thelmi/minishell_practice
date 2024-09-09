@@ -1,0 +1,23 @@
+2
+3
+Makefile
+README.md
+builtins
+execute
+get_next_line.c
+get_next_line.o
+get_next_line_utils.c
+get_next_line_utils.o
+hello.txt
+helloo.txt
+herdoc.c
+main.c
+main.o
+minishell
+minishell.h
+notes.txt
+parse_execute.c
+parse_execute.o
+utils
+w
+[?2004hminishell$ ^C[?2004l
