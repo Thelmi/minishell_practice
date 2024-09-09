@@ -6,7 +6,7 @@
 /*   By: mrhelmy <mrhelmy@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/19 14:27:04 by krazikho          #+#    #+#             */
-/*   Updated: 2024/09/08 23:12:48 by mrhelmy          ###   ########.fr       */
+/*   Updated: 2024/09/09 21:30:29 by mrhelmy          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,34 +29,38 @@ bool is_builtin(char *command){
     }
 }
 
-t_env *execute_command(char *command, t_env *envir, int *last_exit_status, char** ev)
+t_env *execute_command(char *command, t_env **envir, int *last_exit_status, char** ev)
 {
     // char **args;
 
     // args = ft_split(command, ' '); // just for testing later we can parse better (temporary)
     // if (!args || !args[0])
     //     return envir;
-    int fd[2];
-    pipe(fd);
+    // int fd[2];
+    // pipe(fd);
     // (void)fd;
-    if (fork1() == 0)
-    {
-        close (fd[0]);
+    // if (fork1() == 0)
+    // {
+    //     close (fd[0]);
         // printf("first %d\n",  fd[1]);
-        runcmd(parsecmd(command), ev, envir, fd[1]); //we might need to exit when it is a built in, to stop the child process
-    }
+    //    print_tree(parsecmd(command));
+        runcmd(parsecmd(command), ev, envir);
+        // fd parameter as well... was there
+        //we might need to exit when it is a built in, to stop the child process
+    // }
 
-    wait(NULL);
-    close (fd[1]); //pipe communication
+    // wait(NULL);
+    // close (fd[1]); //pipe communication
     // printf("%s\n", get_next_line(fd[0]));
-    char buff[1000];
-    int count = read(fd[0], buff, 100);
-    buff[count] = '\0';
-    // printf("%s\n", buff);
-    close (fd[0]);
+    // char buff[1000];
+    // int count = read(fd[0], buff, 100);
+    // buff[count] = '\0';
+    // // printf("%s\n", buff);
+    // close (fd[0]);
+    
     (void)last_exit_status;
     (void)is_builtin; // YOU CAN VOID FUNCTIONS YAAY
-    (void)is_executable;;
+    (void)is_executable;
 
 
 
@@ -75,5 +79,5 @@ t_env *execute_command(char *command, t_env *envir, int *last_exit_status, char*
     //     *last_exit_status = 127; // status command not found
     // }
     // free_arr(args);
-    return (envir);
+    return (*envir);
 }

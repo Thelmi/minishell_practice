@@ -1,0 +1,44 @@
+File descriptor duplicated, running command
+Entered runcmd
+Command type: 1
+EXEC command: ls
+Parent process waiting for child
+Forked child process, executing external command: ls
+2
+3
+Makefile
+README.md
+builtins
+execute
+get_next_line.c
+get_next_line.o
+get_next_line_utils.c
+get_next_line_utils.o
+go.txt
+h.txt
+h.txty
+hello.txt
+helloo.txt
+hellos.txt
+herdoc.c
+hero.txt
+hi.txt
+howareu.txt
+main.c
+main.o
+minishell
+minishell.h
+notes.txt
+parse_execute.c
+parse_execute.o
+read.txt
+utils
+w
+x.txt
+y.txt
+
+w
+x.txt
+y.txt
+Returned from runcmd after redirection
+[?2004hminishell$ ^C[?2004l

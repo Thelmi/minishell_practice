@@ -6,7 +6,7 @@
 /*   By: mrhelmy <mrhelmy@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/14 14:58:51 by krazikho          #+#    #+#             */
-/*   Updated: 2024/09/07 21:52:05 by mrhelmy          ###   ########.fr       */
+/*   Updated: 2024/09/09 21:27:47 by mrhelmy          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -53,8 +53,8 @@ void    export_no_arg(t_env *env);
 
 // export with args
 int is_valid_identifier(const char *str);
-void update_env(t_env **env, char *variable, char *value,  int fd);
-void export_with_args(t_env **env, int ac, char **av, int fd);
+void update_env(t_env **env, char *variable, char *value);
+void export_with_args(t_env **env, int ac, char **av);
 
 // unset_practice
 void    unset_env(t_env **env, char *variable);
@@ -89,8 +89,8 @@ void update_env_for_cd(t_env **env, char *variable, char *value);
 bool is_only_n(const char *str);
 
 //execution
-t_env *execute_command(char *command, t_env *envir, int *last_exit_status, char** ev);
-t_env *execute_builtin(t_env *envir, char **args, int *last_exit_status, int fd);
+t_env *execute_command(char *command, t_env **envir, int *last_exit_status, char** ev);
+t_env *execute_builtin(t_env **envir, char **args, int *last_exit_status);
 void modify_args(char **args, t_env *envir);
 
 bool is_builtin(char *command);
@@ -145,7 +145,7 @@ typedef struct pipecmd  // Pipe command structure
 } t_pipecmd;
 
 // Main
-void runcmd(struct cmd *cmd, char **ev, t_env *envir, int fd); // Run a command
+void runcmd(struct cmd *cmd, char **ev, t_env **envir); // Run a command
 int getcmd(char *buf, int nbuf); // Get a command from input
 int fork1(); // Fork a process
 void panic(char *s); // Print an error message and exit

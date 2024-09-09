@@ -163,16 +163,20 @@ char	*find_path(char *cmd, char **envp)
 	return (0);
 }
 
-
-void runcmd(struct cmd *cmd, char **ev, t_env *envir, int fd) {
+void runcmd(struct cmd *cmd, char **ev, t_env **envir) {
     int p[2];
     struct execcmd *ecmd;
     struct pipecmd *pcmd;
     struct redircmd *rcmd;
      int saved_stdin = dup(STDIN_FILENO);
+     int saved_stdout = dup(STDOUT_FILENO);
      int pipe_fd;
     if (cmd == NULL)
-        exit(1);
+    {
+      // printf("ioioi\n");
+      // exit(1);
+      return ;
+    }
 
       // (void)fd;
 // printf("I am a child\n");
@@ -183,16 +187,20 @@ void runcmd(struct cmd *cmd, char **ev, t_env *envir, int fd) {
     {
         ecmd = (struct execcmd*)cmd;
         if (ecmd->argv[0] == NULL)
-            exit(1);
+          return ;
+            // exit(1);//return?
         
       if (is_builtin(ecmd->argv[0])==true)
     {
+      
       // printf("TAHA HELLO\n");
         // envir = execute_builtin(envir , args, last_exit_status);
         int *last_exit_status = 0; //modify this
-         execute_builtin(envir , ecmd->argv, last_exit_status, fd);
-        exit(0);
-	}
+         execute_builtin(envir , ecmd->argv, last_exit_status);
+
+        //  printf("TAHA HELLO2\n");
+        return ;
+	  }
     // else if(is_executable(ecmd->argv[0])==true){
     //     // execute_external(command);
     //     *last_exit_status = 0; // assuming command executed succesfully
@@ -203,8 +211,14 @@ void runcmd(struct cmd *cmd, char **ev, t_env *envir, int fd) {
     //     printf("bash:command not found: %s\n", ecmd->argv[0]); // modifying this based on the bash syntax
     //     *last_exit_status = 127; // status command not found
     // }
+    if (fork() == 0)
+    {
         execve(find_path(ecmd->argv[0], ev), ecmd->argv, ev); //you should free properly, make sure strjoin is not leaking
         perror("execve failed");
+        exit(1);
+    }
+    else 
+      wait(NULL);
         // Replace exec with execve
         // printf("%s\n", ecmd->argv[0]);
         // if (ecmd->argv[1])
@@ -215,7 +229,8 @@ void runcmd(struct cmd *cmd, char **ev, t_env *envir, int fd) {
         
         // If execve fails, print an error message and exit
         // perror("execve failed");
-        exit(1);
+        // printf("Done\n");
+        return ;
     } 
     else if (cmd->type == REDIR) 
     {
@@ -226,25 +241,38 @@ void runcmd(struct cmd *cmd, char **ev, t_env *envir, int fd) {
             exit(1);
         }
         if (dup2(fd, rcmd->fd) < 0) {
+      // printf("MMMMMM\n");
             perror("dup2 failed");
             exit(1);
         }
         close(fd);
-        runcmd(rcmd->cmd, ev, envir, fd);
+        runcmd(rcmd->cmd, ev, envir);
+         dup2(saved_stdout, 1);
+         dup2(saved_stdin, 0);
+		return;
     } 
     else if (cmd->type == PIPE) 
     {
         pcmd = (struct pipecmd*)cmd;
         if (pipe(p) < 0)
-            panic("pipe failed");
+        {
+          panic("pipe failed");
+        }
 
+            ecmd = (struct execcmd*)pcmd->left; //double check if this could be redirection
+              if (ecmd->argv[0] == NULL)
+              {
+                printf("bash: syntax error near unexpected token `|\n");
+                return ;
+              }
         if (fork1() == 0) 
         {
             close(p[0]);
             if (dup2(p[1], STDOUT_FILENO) < 0)
                 panic("dup2 failed");
             close(p[1]);
-            runcmd(pcmd->left, ev, envir, fd);
+            runcmd(pcmd->left, ev, envir);
+            exit(0);
         }
         wait(NULL); 
         if (fork1() == 0) 
@@ -305,6 +333,15 @@ void runcmd(struct cmd *cmd, char **ev, t_env *envir, int fd) {
                     tmp2 = ft_split(read, ' '); //free properly
                     while (tmp2[i])
                     {
+                      // int j = 0;
+                          if (tmp2[i][0] == '\"' && tmp2[i][ft_strlen(tmp2[i]) - 1] == '\"')
+                          {
+                            tmp2[i] = ft_substr(tmp2[i], 1, ft_strlen(tmp2[i]) - 2);
+                          }
+                          if (tmp2[i][0] == '\'' && tmp2[i][ft_strlen(tmp2[i]) - 1] == '\'')
+                          {
+                            tmp2[i] = ft_substr(tmp2[i], 1, ft_strlen(tmp2[i]) - 2);
+                          }
                       ecmd->argv[i] = tmp2[i];
                       i++;
                     }
@@ -322,16 +359,139 @@ void runcmd(struct cmd *cmd, char **ev, t_env *envir, int fd) {
                   // ecmd->argv[0] = read;
               }
             }
-            runcmd(pcmd->right, ev, envir, fd);
+            runcmd(pcmd->right, ev, envir);
+            exit(0);
         }
         close(p[0]);
         close(p[1]);
         // wait(NULL); // wait should be after fork
         wait(NULL);
     }
-    exit(0);
+    // exit(0);
+    return ;
 }
 
+// void runcmd(struct cmd *cmd, char **ev, t_env *envir) {
+//     int p[2];
+//     struct execcmd *ecmd;
+//     struct pipecmd *pcmd;
+//     struct redircmd *rcmd;
+//     // int saved_stdin = dup(STDIN_FILENO);
+//     // int pipe_fd;
+
+//     printf("Entered runcmd\n");  // Debug: Entry point
+
+//     if (cmd == NULL) {
+//         printf("cmd is NULL, returning\n");  // Debug: cmd is NULL
+//         return;
+//     }
+
+//     printf("Command type: %d\n", cmd->type);  // Debug: Print command type
+
+//     if (cmd->type == EXEC) {
+//         ecmd = (struct execcmd*)cmd;
+//         printf("EXEC command: %s\n", ecmd->argv[0]);  // Debug: Print command being executed
+
+//         if (ecmd->argv[0] == NULL) {
+//             printf("argv[0] is NULL, returning\n");  // Debug: argv[0] is NULL
+//             return;
+//         }
+
+//         if (is_builtin(ecmd->argv[0]) == true) {
+//             printf("Executing built-in command: %s\n", ecmd->argv[0]);  // Debug: Built-in command
+//             int *last_exit_status = 0; // Modify this
+//             execute_builtin(envir, ecmd->argv, last_exit_status);
+//             return;
+//         }
+
+//         if (fork() == 0) {
+//             printf("Forked child process, executing external command: %s\n", ecmd->argv[0]);  // Debug: External command
+//             execve(find_path(ecmd->argv[0], ev), ecmd->argv, ev);  // Attempting to execute command
+//             perror("execve failed");  // Debug: execve failed
+//             exit(1);  // Exit child process
+//         } else {
+//             printf("Parent process waiting for child\n");  // Debug: Parent waiting
+//             wait(NULL);
+//         }
+//         return;
+//     }
+
+//     else if (cmd->type == REDIR) 
+// {
+//     rcmd = (struct redircmd*)cmd;
+//     printf("REDIR command, file: %s, fd: %d\n", rcmd->file, rcmd->fd);  // Debug: Redirection info
+
+//     // Open the file with the appropriate mode
+//     int fd = open(rcmd->file, rcmd->mode, 0644);
+//     if (fd < 0) {
+//         perror("open failed");
+//         exit(1);
+//     }
+
+//     printf("File opened, duplicating fd\n");  // Debug: File opened
+
+//     // Save the current file descriptor to restore it later
+//     int saved_fd = dup(rcmd->fd);
+    
+//     // Duplicate the file descriptor to the appropriate standard stream (e.g., stdout)
+//     if (dup2(fd, rcmd->fd) < 0) {
+//         perror("dup2 failed");
+//         close(fd);
+//         exit(1);
+//     }
+//     close(fd);  // Close the file descriptor after duplicating
+
+//     printf("File descriptor duplicated, running command\n");  // Debug: fd duplicated
+
+//     // Run the command with redirected output/input
+//     runcmd(rcmd->cmd, ev, envir);
+
+//     // Restore the original file descriptor after the command is executed
+//     dup2(saved_fd, rcmd->fd);
+//     close(saved_fd);
+
+//     printf("Returned from runcmd after redirection\n");  // Debug: Return from recursion
+
+//     return;  // Make sure to return to avoid infinite recursion
+// }
+
+
+//     else if (cmd->type == PIPE) {
+//         pcmd = (struct pipecmd*)cmd;
+//         printf("PIPE command\n");  // Debug: Pipe command
+
+//         if (pipe(p) < 0)
+//             panic("pipe failed");
+
+//         if (fork() == 0) {
+//             printf("Forked child for left side of pipe\n");  // Debug: Left pipe fork
+//             close(p[0]);
+//             if (dup2(p[1], STDOUT_FILENO) < 0)
+//                 panic("dup2 failed");
+//             close(p[1]);
+//             runcmd(pcmd->left, ev, envir);
+//             exit(0);
+//         }
+
+//         wait(NULL);
+//         if (fork() == 0) {
+//             printf("Forked child for right side of pipe\n");  // Debug: Right pipe fork
+//             close(p[1]);
+//             if (dup2(p[0], STDIN_FILENO) < 0)
+//                 panic("dup2 failed");
+//             close(p[0]);
+//             runcmd(pcmd->right, ev, envir);
+//             exit(0);
+//         }
+//         close(p[0]);
+//         close(p[1]);
+//         wait(NULL);
+//         printf("Finished processing pipe\n");  // Debug: Finished pipe
+//     }
+
+//     printf("Exiting runcmd\n");  // Debug: Exit point
+//     return;
+// }
 
 int gettoken(char **ps, char *es, char **q, char **eq) // add herdoc
 {
@@ -497,6 +657,45 @@ struct cmd* nulterminate(struct cmd *cmd)
   }
   return cmd;
 }
+
+struct cmd* remove_quotes(struct cmd *cmd)
+{
+  int i;
+  // struct backcmd *bcmd;
+  struct execcmd *ecmd;
+  // struct listcmd *lcmd;
+  struct pipecmd *pcmd;
+  struct redircmd *rcmd;
+
+  if (cmd == 0)
+    return 0;
+  if (cmd->type == EXEC) {
+    ecmd = (struct execcmd*)cmd;
+    i = 0;
+    while (ecmd->argv[i]) {
+      if (ecmd->argv[i][0] == '\"' && ecmd->argv[i][ft_strlen(ecmd->argv[i]) - 1] == '\"')
+      {
+        ecmd->argv[i] = ft_substr(ecmd->argv[i], 1, ft_strlen(ecmd->argv[i]) - 2);
+      }
+      if (ecmd->argv[i][0] == '\'' && ecmd->argv[i][ft_strlen(ecmd->argv[i]) - 1] == '\'')
+      {
+        ecmd->argv[i] = ft_substr(ecmd->argv[i], 1, ft_strlen(ecmd->argv[i]) - 2);
+      }
+      // printf("%s\n", ecmd->argv[i]);
+      i++;
+    }
+  }
+  else if (cmd->type == REDIR) {
+    rcmd = (struct redircmd*)cmd;
+    remove_quotes(rcmd->cmd);
+  }
+  else if (cmd->type == PIPE) {
+    pcmd = (struct pipecmd*)cmd;
+    remove_quotes(pcmd->left);
+    remove_quotes(pcmd->right);
+  }
+  return cmd;
+}
 // static size_t t_strlen(const char *s)
 // {
 // 	size_t i = 0;
@@ -520,6 +719,7 @@ struct cmd* parsecmd(char *s)
     panic("syntax");
   }
   nulterminate(cmd);
+  remove_quotes(cmd);
   struct heredoc *tmp;
   tmp = heredoc;
     // printf("XXX\n");

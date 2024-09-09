@@ -8,3 +8,13 @@ signals should be tested in parent/child processes e.g. using cat alone // kamil
 1#) make grep accept input with quotes. similar to the original bash
 2#) exit status should be modified/updated everywhere ($?)
 3#) separated struct for export (storing export) and export variable without = sign add to export struct separately
+
+
+
+1*) redirection working yaaay (YAAAAY)
+
+2*) exit not working
+
+3*) if only | (syntax error)... (pipe protection) (YAAAY)
+
+4*) separated struct for export (storing export) and export variable without = sign add to export struct separately

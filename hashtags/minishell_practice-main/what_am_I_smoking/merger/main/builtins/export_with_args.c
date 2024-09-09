@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   export_with_args.c                                 :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: thelmy <thelmy@student.42.fr>              +#+  +:+       +#+        */
+/*   By: mrhelmy <mrhelmy@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/21 18:10:03 by mrhelmy           #+#    #+#             */
-/*   Updated: 2024/08/27 09:32:06 by thelmy           ###   ########.fr       */
+/*   Updated: 2024/09/09 21:22:57 by mrhelmy          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -41,7 +41,7 @@ int is_valid_identifier(const char *str)
     return 1;
 }
 
-void update_env(t_env **env, char *variable, char *value, int fd)
+void update_env(t_env **env, char *variable, char *value)
 {
     t_env *tmp;
     t_env *new_node;
@@ -63,6 +63,7 @@ void update_env(t_env **env, char *variable, char *value, int fd)
     {
         new_node->next = *env;
         *env = new_node;
+        printf("I AM WORKING %s %s\n", variable, value);
     }
     else
     {
@@ -70,27 +71,14 @@ void update_env(t_env **env, char *variable, char *value, int fd)
         free(variable);
         free(value);
     }
-
-    tmp = *env;
-        // printf("second %d\n", fd);
-    while (tmp != NULL)
-    {
-        write (fd, tmp->variable, ft_strlen(tmp->variable));
-        write (fd, "=", 1);
-        write (fd, tmp->value, ft_strlen(tmp->value));
-        // printf("|%s, %ld|\n", tmp->value, ft_strlen(tmp->value));
-        write (fd, "\n", 1);
-        tmp = tmp->next;
-    }
-    close (fd);
 }
 
-void export_with_args(t_env **env, int ac, char **av, int fd)
+void export_with_args(t_env **env, int ac, char **av)
 {
     int i = 1;
     char *variable;
     char *value;
-    // (void)fd;
+
     while (i < ac)
     {
         if (strchr(av[i], '=') == NULL) // libft function
@@ -102,7 +90,7 @@ void export_with_args(t_env **env, int ac, char **av, int fd)
 
         variable = substr_before_char(av[i], '=');
         value = substr_after_char(av[i], '=');
-
+printf("STUPID\n");
         if (variable == NULL || !*variable || !is_valid_identifier(variable))
         {
             printf("export: `%s': not a valid identifier\n", av[i]);
@@ -111,7 +99,7 @@ void export_with_args(t_env **env, int ac, char **av, int fd)
         }
         else
         {
-            update_env(env, variable, value, fd);
+            update_env(env, variable, value);
         }
         i++;
     }
