@@ -55,6 +55,7 @@ void runcmd(struct cmd *cmd, char **ev, t_env **envir, t_export **exp, int *last
 	int saved_stdin = dup(STDIN_FILENO);
 	int saved_stdout = dup(STDOUT_FILENO);
 	int pipe_fd;
+  char *tmp;
 
 	if (cmd == NULL)
 		return ;
@@ -92,19 +93,37 @@ void runcmd(struct cmd *cmd, char **ev, t_env **envir, t_export **exp, int *last
 	{
 		rcmd = (struct redircmd*)cmd;
     // printf("%s\n", rcmd->file);
-		int fd = open(rcmd->file, rcmd->mode, 0644);
-		if (fd < 0) {
-			perror("open failed");
-			*last_exit_status = 1;
-			return ;
-		}
-		if (dup2(fd, rcmd->fd) < 0) {
-			perror("dup2 failed");
-			close(fd);
-			*last_exit_status = 1;
-			return ;
-		}
-		close(fd);
+    if (rcmd->file && !((rcmd->file[0] == '\"' || rcmd->file[0] == '\'') && rcmd->file[1] == '\0'))
+    {
+      if (rcmd->file && rcmd->file[0] == '\"' && rcmd->file[ft_strlen(rcmd->file) - 1] == '\"')
+        {
+          tmp = ft_substr(rcmd->file, 1, ft_strlen(rcmd->file) - 2);
+          // if ()
+          // free (rcmd->file);
+          rcmd->file = tmp;
+        } 
+        if (rcmd->file && rcmd->file[0] == '\'' && rcmd->file[ft_strlen(rcmd->file) - 1] == '\'')
+        {
+          tmp = ft_substr(rcmd->file, 1, ft_strlen(rcmd->file) - 2);
+          // if ()
+          // free (rcmd->file);
+          rcmd->file = tmp;
+        } 
+        // printf("%s\n", rcmd->file);
+      int fd = open(rcmd->file, rcmd->mode, 0644);
+      if (fd < 0) {
+        perror("open failed");
+        *last_exit_status = 1;
+        return ;
+      }
+      if (dup2(fd, rcmd->fd) < 0) {
+        perror("dup2 failed");
+        close(fd);
+        *last_exit_status = 1;
+        return ;
+      }
+      close(fd);
+    }
 		runcmd(rcmd->cmd, ev, envir, exp, last_exit_status);
 		dup2(saved_stdout, 1);
 		dup2(saved_stdin, 0);
@@ -429,6 +448,7 @@ struct cmd* parsecmd(char *s, int *last_exit_status)
     struct heredoc *tmp;
     char *read = NULL;
     char *tmp2 = NULL;
+    char *tmp3 = NULL;
     int i;
 
     heredoc = NULL;
@@ -456,6 +476,18 @@ struct cmd* parsecmd(char *s, int *last_exit_status)
             i++;
         }
         tmp2 = ft_substr(tmp->argv, 0, i);
+        if (tmp2 && tmp2[0] == '\"' && tmp2[ft_strlen(tmp2) - 1] == '\"')
+        {
+          tmp3 = ft_substr(tmp->argv, 1, ft_strlen(tmp2) - 2);
+          free (tmp2);
+          tmp2 = tmp3;
+        } 
+        if (tmp2 && tmp2[0] == '\'' && tmp2[ft_strlen(tmp2) - 1] == '\'')
+        {
+          tmp3 = ft_substr(tmp->argv, 1, ft_strlen(tmp2) - 2);
+          free (tmp2);
+          tmp2 = tmp3;
+        } 
 		 if (tmp2 == NULL) 
 		 {
             perror("Error allocating memory for heredoc delimiter");
